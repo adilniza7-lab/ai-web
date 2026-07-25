@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Minbar Live — Sermon translation</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header>
+        <div class="brand">Minbar <span>Live</span></div>
+        <p>Live text translation for sermons</p>
+      </header>
+
+      <section class="card live" id="live" aria-live="polite">
+        <div class="status"><span class="dot"></span><span id="statusText">Preparing microphone…</span></div>
+        <label for="language">Translation language</label>
+        <select id="language">
+          <option value="sq">Shqip</option>
+          <option value="ar">العربية</option>
+          <option value="bn">বাংলা</option>
+          <option value="bs">Bosanski</option>
+          <option value="prs">دری</option>
+          <option value="da">Dansk</option>
+          <option value="nl">Nederlands</option>
+          <option value="en" selected>English</option>
+          <option value="fi">Suomi</option>
+          <option value="fr">Français</option>
+          <option value="de">Deutsch</option>
+          <option value="it">Italiano</option>
+          <option value="ku">Kurdî</option>
+          <option value="no">Norsk</option>
+          <option value="fa">فارسی</option>
+          <option value="pl">Polski</option>
+          <option value="ro">Română</option>
+          <option value="ru">Русский</option>
+          <option value="so">Soomaali</option>
+          <option value="es">Español</option>
+          <option value="sv">Svenska</option>
+          <option value="tr">Türkçe</option>
+          <option value="uk">Українська</option>
+          <option value="ur">اردو</option>
+        </select>
+        <div class="languages"><span id="source">Speaker's language: detecting…</span><span>→</span><strong id="target">English</strong></div>
+        <p class="translation empty" id="translation">Allow microphone access to begin live translation.</p>
+        <p class="notice">Your audio is sent in short segments for automatic transcription and translation. Translation may contain inaccuracies.</p>
+      </section>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>

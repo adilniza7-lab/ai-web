@@ -4,7 +4,7 @@ Mobile-first live, text-only sermon translation. A visitor scans a QR code, allo
 
 ## Required setup before testing
 
-This site uses a Cloudflare Pages Function. In the Cloudflare Pages settings for this project, add an encrypted environment variable named `OPENAI_API_KEY` with an OpenAI API key. Never add the key to the repository or to browser code.
+This site uses a Cloudflare Worker. In the Worker settings, add an encrypted secret named `OPENAI_API_KEY` with an OpenAI API key. Never add the key to the repository or to browser code.
 
 After the next deployment, open the public site on a phone over HTTPS, allow microphone access, and speak near the phone speaker. The server recognizes the source language automatically and translates it into the selected language.
 
