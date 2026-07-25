@@ -1,15 +1,15 @@
 # Minbar Live
 
-Mobile-first English-language prototype for live, text-only sermon translation.
+Mobile-first live, text-only sermon translation. A visitor scans a QR code, allows microphone access, selects a language, and receives a new translation every few seconds.
 
-The visitor opens a QR-code link directly to the live translation screen. They can choose or change their language at any time without interrupting the sermon. The page is intentionally lightweight and does not ask a visitor for microphone permission.
+## Required setup before testing
 
-## What is needed for live operation
+This site uses a Cloudflare Pages Function. In the Cloudflare Pages settings for this project, add an encrypted environment variable named `OPENAI_API_KEY` with an OpenAI API key. Never add the key to the repository or to browser code.
 
-One mosque-controlled broadcaster needs a microphone and a small server that:
+After the next deployment, open the public site on a phone over HTTPS, allow microphone access, and speak near the phone speaker. The server recognizes the source language automatically and translates it into the selected language.
 
-1. streams the imam's audio to a speech-recognition service with automatic language identification;
-2. translates completed speech segments into the languages currently in use;
-3. sends each translation to listeners over WebSocket.
+## Notes
 
-The visitor page is ready to receive `{ type: 'translation', detectedLanguage, text, targetLanguage }` events. A production version should also use a unique session QR link, access controls for the broadcaster, and a notice that translations are automated.
+- Each phone processes only its own microphone input; a phone closer to the mosque speaker will usually have better results.
+- Audio is transmitted in short segments only to perform transcription and translation.
+- Automatic religious translation can contain errors and should not be treated as an authoritative interpretation.

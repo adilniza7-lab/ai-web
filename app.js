@@ -8,27 +8,60 @@ const names = {
 const language = document.querySelector('#language');
 const target = document.querySelector('#target');
 const translation = document.querySelector('#translation');
+const statusText = document.querySelector('#statusText');
+let recorder;
+let activeLanguage = language.value;
 
 function chooseLanguage() {
   target.textContent = names[language.value];
-  connectToTranslationSession(language.value);
+  activeLanguage = language.value;
 }
 
 language.addEventListener('change', chooseLanguage);
 chooseLanguage();
+startListening();
 
-// The mosque's broadcaster sends events from its microphone through a secure server.
-// Replace this demo hook with a WebSocket, e.g. wss://your-domain/live/{mosque-session}.
-function connectToTranslationSession(targetLanguage) {
-  document.querySelector('#statusText').textContent = 'Connected to live translation';
-  document.querySelector('#source').textContent = "Speaker's language: detecting automatically";
+async function startListening() {
+  if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
+    statusText.textContent = 'This browser does not support live microphone translation.';
+    return;
+  }
 
-  // Expected event shape from the server:
-  // { type: 'translation', detectedLanguage: 'Somali', text: '…', targetLanguage: 'ru' }
-  window.receiveTranslation = (event) => {
-    if (event.type !== 'translation' || event.targetLanguage !== targetLanguage) return;
-    document.querySelector('#source').textContent = `Speaker's language: ${event.detectedLanguage}`;
-    translation.textContent = event.text;
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+    });
+    recorder = new MediaRecorder(stream, { mimeType: supportedMimeType() });
+    recorder.addEventListener('dataavailable', ({ data }) => {
+      if (data.size) translateAudio(data);
+    });
+    recorder.start(4500);
+    statusText.textContent = 'Listening and translating live';
+    document.querySelector('#source').textContent = "Speaker's language: detecting automatically";
+  } catch (error) {
+    statusText.textContent = 'Microphone access is needed for live translation.';
+    translation.textContent = 'Please allow microphone access in your browser settings, then reload this page.';
+  }
+}
+
+function supportedMimeType() {
+  return MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm';
+}
+
+async function translateAudio(audio) {
+  const form = new FormData();
+  form.append('audio', audio, 'sermon.webm');
+  form.append('targetLanguage', activeLanguage);
+
+  try {
+    const response = await fetch('/api/translate', { method: 'POST', body: form });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || 'Translation failed');
+    if (!result.translation) return;
+    document.querySelector('#source').textContent = `Speaker's language: ${result.detectedLanguage}`;
+    translation.textContent = result.translation;
     translation.classList.remove('empty');
-  };
+  } catch (error) {
+    statusText.textContent = 'Waiting for translation service…';
+  }
 }
