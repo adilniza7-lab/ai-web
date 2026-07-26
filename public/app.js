@@ -10,6 +10,7 @@ const language = document.querySelector('#language');
 const target = document.querySelector('#target');
 const translation = document.querySelector('#translation');
 const statusText = document.querySelector('#statusText');
+const voiceEnabled = document.querySelector('#voiceEnabled');
 let peerConnection;
 let dataChannel;
 let mediaStream;
@@ -87,8 +88,18 @@ function handleRealtimeEvent({ data }) {
   if (event.type === 'response.output_text.done' && event.text) {
     translation.textContent = event.text;
     translation.classList.remove('empty');
+    speakTranslation(event.text);
   }
   if (event.type === 'error') showError(event.error?.message || 'Live translation service error.');
+}
+
+function speakTranslation(text) {
+  if (!voiceEnabled.checked || !window.speechSynthesis || !text.trim()) return;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = activeLanguage === 'prs' ? 'fa-AF' : activeLanguage;
+  utterance.rate = 1.08;
+  window.speechSynthesis.speak(utterance);
 }
 
 function reconnect() {

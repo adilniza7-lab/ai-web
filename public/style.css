@@ -8,6 +8,8 @@ header p, .muted, .notice { color: #587168; }
 .card { background: #fff; border-radius: 20px; padding: clamp(24px, 6vw, 44px); box-shadow: 0 12px 45px #174d3814; }
 h1 { margin-top: 0; font-size: clamp(26px, 5vw, 36px); line-height: 1.08; }
 label { display: block; font-weight: 700; margin: 26px 0 8px; }
+.voice-option { display: flex; align-items: center; gap: 10px; margin: 16px 0 0; font-size: 15px; color: #174d38; }
+.voice-option input { width: 18px; height: 18px; accent-color: #c62828; }
 select, button { width: 100%; min-height: 52px; border-radius: 12px; font: inherit; font-size: 16px; }
 select { border: 1px solid #c9d9d0; padding: 0 15px; background: #fff; }
 button { margin-top: 18px; border: 0; color: white; background: #16805c; font-weight: 750; cursor: pointer; }
