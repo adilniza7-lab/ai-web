@@ -43,7 +43,12 @@
           <option value="uk">Українська</option>
           <option value="ur">اردو</option>
         </select>
-        <label class="voice-option" for="voiceEnabled"><input id="voiceEnabled" type="checkbox" /> Read each translation aloud</label>
+        <label class="voice-option" for="voiceEnabled"><input id="voiceEnabled" type="checkbox" /> Listen to translated voice</label>
+        <div class="audio-controls">
+          <label for="volume">Translation volume</label>
+          <input id="volume" type="range" min="0" max="1" step="0.05" value="1" />
+        </div>
+        <audio id="translatedAudio" autoplay></audio>
         <div class="languages"><span id="source">Speaker's language: detecting…</span><span>→</span><strong id="target">English</strong></div>
         <p class="translation empty" id="translation">Allow microphone access to begin live translation.</p>
         <p class="notice">Your audio is sent securely for live translation. Translation may contain inaccuracies.</p>

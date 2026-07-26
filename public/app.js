@@ -11,21 +11,25 @@ const target = document.querySelector('#target');
 const translation = document.querySelector('#translation');
 const statusText = document.querySelector('#statusText');
 const voiceEnabled = document.querySelector('#voiceEnabled');
+const volume = document.querySelector('#volume');
+const translatedAudio = document.querySelector('#translatedAudio');
 const enableMicrophone = document.querySelector('#enableMicrophone');
 let peerConnection;
 let dataChannel;
 let mediaStream;
 let activeLanguage = language.value;
-let latestResponseId = '';
 
 function chooseLanguage() {
   activeLanguage = language.value;
   target.textContent = names[activeLanguage];
-  if (dataChannel?.readyState === 'open') reconnect();
+  if (peerConnection) reconnect();
 }
 
 language.addEventListener('change', chooseLanguage);
+voiceEnabled.addEventListener('change', () => { translatedAudio.muted = !voiceEnabled.checked; });
+volume.addEventListener('input', () => { translatedAudio.volume = Number(volume.value); });
 enableMicrophone.addEventListener('click', startListening);
+translatedAudio.muted = true;
 chooseLanguage();
 startListening();
 
@@ -34,15 +38,12 @@ async function startListening() {
     showMicrophoneHelp('This browser does not support live microphone translation. Please open the QR link in Chrome or Safari.');
     return;
   }
-
   try {
     mediaStream?.getTracks().forEach((track) => track.stop());
-    mediaStream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
-    });
+    mediaStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
     enableMicrophone.classList.remove('visible');
     await connect();
-  } catch (error) {
+  } catch {
     showMicrophoneHelp('Tap “Enable microphone”, then choose Allow. If the browser has blocked it before, open the lock icon next to the website address and allow Microphone.');
   }
 }
@@ -52,62 +53,50 @@ async function connect() {
   statusText.textContent = 'Connecting to live translation…';
   peerConnection = new RTCPeerConnection();
   mediaStream.getTracks().forEach((track) => peerConnection.addTrack(track, mediaStream));
+  peerConnection.addEventListener('track', ({ streams }) => {
+    translatedAudio.srcObject = streams[0];
+    translatedAudio.play().catch(() => {});
+  });
   dataChannel = peerConnection.createDataChannel('oai-events');
   dataChannel.addEventListener('open', () => {
-    statusText.textContent = 'Listening and translating live';
+    statusText.textContent = 'Listening, translating, and speaking live';
     document.querySelector('#source').textContent = "Speaker's language: detecting automatically";
   });
-  dataChannel.addEventListener('message', handleRealtimeEvent);
-  dataChannel.addEventListener('close', () => {
-    if (peerConnection?.connectionState !== 'closed') showError('Live connection closed. Please reload the page.');
-  });
-  peerConnection.addEventListener('connectionstatechange', () => {
-    if (peerConnection.connectionState === 'failed') showError('Live connection failed. Please reload the page.');
-  });
+  dataChannel.addEventListener('message', handleTranslationEvent);
+  dataChannel.addEventListener('close', () => { if (peerConnection?.connectionState !== 'closed') showError('Live connection closed. Please reload the page.'); });
+  peerConnection.addEventListener('connectionstatechange', () => { if (peerConnection.connectionState === 'failed') showError('Live connection failed. Please reload the page.'); });
 
+  const { value: clientSecret } = await fetch('/api/translation-session', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ targetLanguage: activeLanguage })
+  }).then(async (response) => {
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || 'Unable to start live translation.');
+    return result;
+  });
   const offer = await peerConnection.createOffer();
   await peerConnection.setLocalDescription(offer);
-  const response = await fetch('/api/realtime-call', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ sdp: offer.sdp, targetLanguage: activeLanguage })
+  const response = await fetch('https://api.openai.com/v1/realtime/translations/calls', {
+    method: 'POST', headers: { Authorization: `Bearer ${clientSecret}`, 'Content-Type': 'application/sdp' }, body: offer.sdp
   });
-  if (!response.ok) {
-    const result = await response.json().catch(() => ({}));
-    throw new Error(result.error || 'Unable to start live translation.');
-  }
+  if (!response.ok) throw new Error('Unable to connect to live translation.');
   await peerConnection.setRemoteDescription({ type: 'answer', sdp: await response.text() });
 }
 
-function handleRealtimeEvent({ data }) {
+function handleTranslationEvent({ data }) {
   const event = JSON.parse(data);
-  if (event.type === 'response.output_text.delta') {
-    if (latestResponseId !== event.response_id) {
-      latestResponseId = event.response_id;
-      translation.textContent = '';
-      translation.classList.remove('empty');
-    }
+  if (event.type === 'session.output_transcript.delta') {
     translation.textContent += event.delta;
-  }
-  if (event.type === 'response.output_text.done' && event.text) {
-    translation.textContent = event.text;
     translation.classList.remove('empty');
-    speakTranslation(event.text);
+  }
+  if (event.type === 'session.input_transcript.delta') {
+    document.querySelector('#source').textContent = `Speaker: ${event.delta}`;
   }
   if (event.type === 'error') showError(event.error?.message || 'Live translation service error.');
 }
 
-function speakTranslation(text) {
-  if (!voiceEnabled.checked || !window.speechSynthesis || !text.trim()) return;
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = activeLanguage === 'prs' ? 'fa-AF' : activeLanguage;
-  utterance.rate = 1.08;
-  window.speechSynthesis.speak(utterance);
-}
-
 function reconnect() {
   if (!mediaStream) return;
+  translation.textContent = '';
   connect().catch((error) => showError(error.message));
 }
 
