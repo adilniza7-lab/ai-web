@@ -19,7 +19,10 @@ export async function onRequestPost({ request, env }) {
   const transcriptionResponse = await fetch('https://api.openai.com/v1/audio/transcriptions', {
     method: 'POST', headers: { Authorization: `Bearer ${env.OPENAI_API_KEY}` }, body: transcriptionForm
   });
-  if (!transcriptionResponse.ok) return json({ error: 'Speech recognition is unavailable.' }, 502);
+  if (!transcriptionResponse.ok) {
+    console.error('OpenAI transcription failed', transcriptionResponse.status);
+    return json({ error: `Speech recognition failed (${transcriptionResponse.status}).` }, 502);
+  }
   const { text } = await transcriptionResponse.json();
   if (!text?.trim()) return json({ translation: '' });
 
@@ -34,7 +37,10 @@ export async function onRequestPost({ request, env }) {
       ]
     })
   });
-  if (!translationResponse.ok) return json({ error: 'Translation is unavailable.' }, 502);
+  if (!translationResponse.ok) {
+    console.error('OpenAI translation failed', translationResponse.status);
+    return json({ error: `Translation failed (${translationResponse.status}).` }, 502);
+  }
   const completion = await translationResponse.json();
   try { return json(JSON.parse(completion.choices[0].message.content)); }
   catch { return json({ error: 'Translation response was invalid.' }, 502); }
