@@ -11,6 +11,7 @@ const target = document.querySelector('#target');
 const translation = document.querySelector('#translation');
 const statusText = document.querySelector('#statusText');
 const voiceEnabled = document.querySelector('#voiceEnabled');
+const enableMicrophone = document.querySelector('#enableMicrophone');
 let peerConnection;
 let dataChannel;
 let mediaStream;
@@ -24,22 +25,25 @@ function chooseLanguage() {
 }
 
 language.addEventListener('change', chooseLanguage);
+enableMicrophone.addEventListener('click', startListening);
 chooseLanguage();
 startListening();
 
 async function startListening() {
   if (!navigator.mediaDevices?.getUserMedia || !window.RTCPeerConnection) {
-    showError('This browser does not support live microphone translation. Please open the QR link in Chrome or Safari.');
+    showMicrophoneHelp('This browser does not support live microphone translation. Please open the QR link in Chrome or Safari.');
     return;
   }
 
   try {
+    mediaStream?.getTracks().forEach((track) => track.stop());
     mediaStream = await navigator.mediaDevices.getUserMedia({
       audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
     });
+    enableMicrophone.classList.remove('visible');
     await connect();
   } catch (error) {
-    showError('Microphone access is needed for live translation. Please allow it in browser settings and reload this page.');
+    showMicrophoneHelp('Tap “Enable microphone”, then choose Allow. If the browser has blocked it before, open the lock icon next to the website address and allow Microphone.');
   }
 }
 
@@ -118,4 +122,11 @@ function showError(message) {
   statusText.textContent = message;
   translation.textContent = 'Live translation is temporarily unavailable.';
   translation.classList.add('empty');
+}
+
+function showMicrophoneHelp(message) {
+  statusText.textContent = message;
+  translation.textContent = 'Microphone permission is needed to start live translation.';
+  translation.classList.add('empty');
+  enableMicrophone.classList.add('visible');
 }
