@@ -50,7 +50,14 @@
         </div>
         <audio id="translatedAudio" autoplay></audio>
         <div class="languages"><span id="source">Speaker's language: detecting…</span><span>→</span><strong id="target">English</strong></div>
-        <p class="translation empty" id="translation">Allow microphone access to begin live translation.</p>
+        <section class="transcript-section">
+          <h2>Original speech</h2>
+          <p class="source-text empty" id="sourceText">The speaker's words will appear here.</p>
+        </section>
+        <section class="transcript-section translation-section">
+          <h2>Translation</h2>
+          <p class="translation empty" id="translation">Allow microphone access to begin live translation.</p>
+        </section>
         <p class="notice">Your audio is sent securely for live translation. Translation may contain inaccuracies.</p>
       </section>
     </main>

@@ -9,6 +9,7 @@ const names = {
 const language = document.querySelector('#language');
 const target = document.querySelector('#target');
 const translation = document.querySelector('#translation');
+const sourceText = document.querySelector('#sourceText');
 const statusText = document.querySelector('#statusText');
 const voiceEnabled = document.querySelector('#voiceEnabled');
 const volume = document.querySelector('#volume');
@@ -18,6 +19,7 @@ let peerConnection;
 let dataChannel;
 let mediaStream;
 let activeLanguage = language.value;
+let sourceTranscript = '';
 
 function chooseLanguage() {
   activeLanguage = language.value;
@@ -89,7 +91,9 @@ function handleTranslationEvent({ data }) {
     translation.classList.remove('empty');
   }
   if (event.type === 'session.input_transcript.delta') {
-    document.querySelector('#source').textContent = `Speaker: ${event.delta}`;
+    sourceTranscript += event.delta;
+    sourceText.textContent = sourceTranscript;
+    sourceText.classList.remove('empty');
   }
   if (event.type === 'error') showError(event.error?.message || 'Live translation service error.');
 }
@@ -97,6 +101,9 @@ function handleTranslationEvent({ data }) {
 function reconnect() {
   if (!mediaStream) return;
   translation.textContent = '';
+  sourceTranscript = '';
+  sourceText.textContent = "The speaker's words will appear here.";
+  sourceText.classList.add('empty');
   connect().catch((error) => showError(error.message));
 }
 
