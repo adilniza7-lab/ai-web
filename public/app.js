@@ -31,7 +31,8 @@ async function startListening() {
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
     });
-    recorder = new MediaRecorder(stream, { mimeType: supportedMimeType() });
+    const mimeType = supportedMimeType();
+    recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
     recorder.addEventListener('dataavailable', ({ data }) => {
       if (data.size) translateAudio(data);
     });
@@ -45,7 +46,8 @@ async function startListening() {
 }
 
 function supportedMimeType() {
-  return MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm';
+  const types = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'];
+  return types.find((type) => MediaRecorder.isTypeSupported(type)) || '';
 }
 
 async function translateAudio(audio) {
@@ -62,6 +64,6 @@ async function translateAudio(audio) {
     translation.textContent = result.translation;
     translation.classList.remove('empty');
   } catch (error) {
-    statusText.textContent = 'Waiting for translation service…';
+    statusText.textContent = error.message || 'Translation service is unavailable.';
   }
 }
