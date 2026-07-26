@@ -52,7 +52,8 @@ function supportedMimeType() {
 
 async function translateAudio(audio) {
   const form = new FormData();
-  form.append('audio', audio, 'sermon.webm');
+  const extension = audio.type.includes('mp4') ? 'mp4' : 'webm';
+  form.append('audio', audio, `sermon.${extension}`);
   form.append('targetLanguage', activeLanguage);
 
   try {
